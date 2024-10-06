@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
+using server.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,9 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    
 }
-
+app.UseMiddleware<HandlingErrors>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

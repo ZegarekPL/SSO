@@ -1,33 +1,55 @@
+using HttpExceptions.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using server.Models;
+using server.Models.DTO;
 
 namespace server.Controllers;
 
 [ApiController]
-[Route("kutas")]
-public class WeatherForecastController : ControllerBase
+[Route("weatherForecast")]
+public class WeatherForecastController(AppDbContext context) : ControllerBase
 {
-    private static readonly string[] Summaries = new[]
+    [HttpGet("GetWeatherForecast")]
+    public async Task<IEnumerable<WeatherForecast>> Get()
     {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
-
-    private readonly ILogger<WeatherForecastController> _logger;
-
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
-    {
-        _logger = logger;
+        return await context.WeatherForecast.ToListAsync();
     }
 
-    [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<Models.Dupa> Get()
+    [HttpPost]
+    public void Post(WeatherForecastRequest newWeatherForecast)
     {
-        return Enumerable.Range(1, 5).Select(index => new Dupa
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-        })
-        .ToArray();
+        WeatherForecast weatherForecast = new WeatherForecast();
+        
+        weatherForecast.Date = newWeatherForecast.Date;
+        weatherForecast.Temperature = newWeatherForecast.Temperature;
+        weatherForecast.Summary = newWeatherForecast.Summary;
+        
+        context.WeatherForecast.Add(weatherForecast);
+        context.SaveChanges();
+    }
+    
+    [HttpPut]
+    public void Put(WeatherForecastRequest newWeatherForecast, int id)
+    {
+        WeatherForecast weatherForecast = context.WeatherForecast.SingleOrDefault(wf => wf.Id == id)
+            ?? throw new NotFoundException("Not Exists");
+        
+        weatherForecast.Date = newWeatherForecast.Date;
+        if(newWeatherForecast.Date.Day > 31) throw new BadRequestException("ASDasd");
+        weatherForecast.Temperature = newWeatherForecast.Temperature;
+        weatherForecast.Summary = newWeatherForecast.Summary;
+        
+        context.WeatherForecast.Update(weatherForecast);
+        context.SaveChanges();
+    }
+    
+    [HttpDelete]
+    public void Delete(int id)
+    {
+        WeatherForecast weatherForecast = context.WeatherForecast.SingleOrDefault(wf => wf.Id == id)
+                                          ?? throw new NotFoundException("Not Exists");
+        context.WeatherForecast.Remove(weatherForecast);
+        context.SaveChanges();
     }
 }
