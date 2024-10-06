@@ -1,55 +1,37 @@
+using System.ComponentModel.DataAnnotations;
 using HttpExceptions.Exceptions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using server.Models;
 using server.Models.DTO;
+using server.Services;
 
 namespace server.Controllers;
 
 [ApiController]
 [Route("weatherForecast")]
-public class WeatherForecastController(AppDbContext context) : ControllerBase
+public class WeatherForecastController(WeatherForecastService service) : ControllerBase
 {
     [HttpGet("GetWeatherForecast")]
     public async Task<IEnumerable<WeatherForecast>> Get()
     {
-        return await context.WeatherForecast.ToListAsync();
+        return await service.Get();
     }
 
     [HttpPost]
-    public void Post(WeatherForecastRequest newWeatherForecast)
+    public void Post([Required] WeatherForecastRequest newWeatherForecast)
     {
-        WeatherForecast weatherForecast = new WeatherForecast();
-        
-        weatherForecast.Date = newWeatherForecast.Date;
-        weatherForecast.Temperature = newWeatherForecast.Temperature;
-        weatherForecast.Summary = newWeatherForecast.Summary;
-        
-        context.WeatherForecast.Add(weatherForecast);
-        context.SaveChanges();
+        service.Post(newWeatherForecast);
     }
-    
+
     [HttpPut]
-    public void Put(WeatherForecastRequest newWeatherForecast, int id)
+    public void Put([Required] WeatherForecastRequest newWeatherForecast, [Required] int id)
     {
-        WeatherForecast weatherForecast = context.WeatherForecast.SingleOrDefault(wf => wf.Id == id)
-            ?? throw new NotFoundException("Not Exists");
-        
-        weatherForecast.Date = newWeatherForecast.Date;
-        if(newWeatherForecast.Date.Day > 31) throw new BadRequestException("ASDasd");
-        weatherForecast.Temperature = newWeatherForecast.Temperature;
-        weatherForecast.Summary = newWeatherForecast.Summary;
-        
-        context.WeatherForecast.Update(weatherForecast);
-        context.SaveChanges();
+        service.Put(newWeatherForecast, id);
     }
-    
+
     [HttpDelete]
-    public void Delete(int id)
+    public void Delete([Required] int id)
     {
-        WeatherForecast weatherForecast = context.WeatherForecast.SingleOrDefault(wf => wf.Id == id)
-                                          ?? throw new NotFoundException("Not Exists");
-        context.WeatherForecast.Remove(weatherForecast);
-        context.SaveChanges();
+        service.Delete(id);
     }
 }
